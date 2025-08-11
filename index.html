@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CV Mind Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://unpkg.com/cytoscape@3/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-svg@2/cytoscape-svg.min.js"></script>
+  </head>
+  <body>
+    <div class="app-root">
+      <div class="topbar">
+        <div class="brand">
+          <span class="logo">🧠</span>
+          <span class="title">CV Mind Map</span>
+        </div>
+        <div class="controls">
+          <div class="control-group">
+            <label for="nodeTypeSelect">Type</label>
+            <select id="nodeTypeSelect">
+              <option value="experience">Experience</option>
+              <option value="skill">Skill</option>
+              <option value="project">Project</option>
+              <option value="education">Education</option>
+              <option value="certification">Certification</option>
+            </select>
+            <button id="addNodeBtn" class="primary">Add Node</button>
+          </div>
+
+          <div class="control-group">
+            <label for="colorPicker">Color</label>
+            <input id="colorPicker" type="color" value="#6c5ce7" />
+            <button id="randomColorBtn" title="Random color">🎨</button>
+          </div>
+
+          <div class="control-group">
+            <label for="shapeSelect">Shape</label>
+            <select id="shapeSelect">
+              <option value="round-rectangle">Rounded</option>
+              <option value="ellipse">Ellipse</option>
+              <option value="diamond">Diamond</option>
+              <option value="rectangle">Rectangle</option>
+              <option value="hexagon">Hexagon</option>
+              <option value="triangle">Triangle</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <button id="connectModeBtn">Connect</button>
+            <button id="editLabelBtn">Edit</button>
+            <button id="deleteBtn" class="danger">Delete</button>
+          </div>
+
+          <div class="control-group">
+            <label for="layoutSelect">Layout</label>
+            <select id="layoutSelect">
+              <option value="cose">CoSE</option>
+              <option value="breadthfirst">Tree</option>
+              <option value="concentric">Concentric</option>
+              <option value="circle">Circle</option>
+              <option value="grid">Grid</option>
+            </select>
+            <button id="runLayoutBtn">Run</button>
+            <button id="fitBtn">Fit</button>
+          </div>
+
+          <div class="control-group">
+            <button id="saveBtn" class="primary" title="Save to browser and download JSON">Save</button>
+          </div>
+
+          <div class="control-group">
+            <button id="moreMenuBtn">More ▾</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="cy"></div>
+
+      <!-- More Menu Panel -->
+      <div id="moreMenu" class="menu-panel hidden">
+        <div class="menu-section">
+          <div class="menu-title">Search</div>
+          <div class="menu-row">
+            <input id="searchInput" type="text" placeholder="Find by label" />
+          </div>
+          <div class="menu-row">
+            <label class="checkbox"><input id="hideUnmatched" type="checkbox" /> Hide unmatched</label>
+          </div>
+          <div class="menu-row types">
+            <label class="checkbox"><input id="fltExperience" type="checkbox" checked /> Exp</label>
+            <label class="checkbox"><input id="fltSkill" type="checkbox" checked /> Skill</label>
+            <label class="checkbox"><input id="fltProject" type="checkbox" checked /> Proj</label>
+            <label class="checkbox"><input id="fltEducation" type="checkbox" checked /> Edu</label>
+            <label class="checkbox"><input id="fltCertification" type="checkbox" checked /> Cert</label>
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <div class="menu-title">Actions</div>
+          <div class="menu-row gap">
+            <button id="undoBtn" title="Ctrl+Z">Undo</button>
+            <button id="redoBtn" title="Ctrl+Y">Redo</button>
+            <button id="duplicateBtn">Duplicate</button>
+            <button id="quickAddToggle" class="primary">Quick Add</button>
+          </div>
+          <div class="menu-row gap">
+            <button id="loadBtn">Load</button>
+            <button id="exportBtn" title="Click: JSON, Shift: PNG, Ctrl: SVG">Export</button>
+            <label class="import-label">
+              Import
+              <input id="importInput" type="file" accept="application/json" />
+            </label>
+            <button id="clearBtn">Clear</button>
+          </div>
+        </div>
+
+        <div class="menu-section">
+          <div class="menu-title">Versions</div>
+          <div class="menu-row gap">
+            <button id="saveVersionBtn">Save Version</button>
+            <select id="versionSelect"></select>
+            <button id="restoreVersionBtn">Restore</button>
+            <button id="clearVersionsBtn">Clear</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Add Panel -->
+      <div id="quickAddPanel" class="quickadd hidden">
+        <div class="qa-header">
+          <div class="qa-title">Quick Add</div>
+          <button id="qaCloseBtn">✕</button>
+        </div>
+        <div class="qa-body">
+          <div class="qa-tabs">
+            <button class="qa-tab active" data-type="experience">Experience</button>
+            <button class="qa-tab" data-type="skill">Skill</button>
+            <button class="qa-tab" data-type="project">Project</button>
+          </div>
+
+          <div id="qaExperience" class="qa-form">
+            <div class="qa-grid">
+              <div class="col-span-2">
+                <label>Role</label>
+                <input id="qaRole" type="text" placeholder="e.g. Senior Engineer" />
+              </div>
+              <div>
+                <label>Company</label>
+                <input id="qaCompany" type="text" placeholder="e.g. Acme Corp" />
+              </div>
+              <div>
+                <label>Dates</label>
+                <input id="qaDates" type="text" placeholder="e.g. 2021–2024" />
+              </div>
+            </div>
+          </div>
+
+          <div id="qaSkill" class="qa-form hidden">
+            <div class="qa-grid">
+              <div class="col-span-2">
+                <label>Skill</label>
+                <input id="qaSkillName" type="text" placeholder="e.g. React" />
+              </div>
+              <div class="col-span-2">
+                <label>Level</label>
+                <input id="qaSkillLevel" type="text" placeholder="e.g. Advanced" />
+              </div>
+            </div>
+          </div>
+
+          <div id="qaProject" class="qa-form hidden">
+            <div class="qa-grid">
+              <div class="col-span-2">
+                <label>Project Name</label>
+                <input id="qaProjectName" type="text" placeholder="e.g. Portfolio Site" />
+              </div>
+              <div class="col-span-2">
+                <label>Tech Stack</label>
+                <input id="qaProjectStack" type="text" placeholder="e.g. Next.js, Tailwind" />
+              </div>
+              <div class="col-span-2">
+                <label>Link</label>
+                <input id="qaProjectLink" type="text" placeholder="https://..." />
+              </div>
+            </div>
+          </div>
+
+          <div class="qa-actions">
+            <button id="qaAddBtn" class="primary">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="statusbar">
+        <div id="statusText">Tip: Double-click a node or edge to edit its label. Use Delete key to remove selection.</div>
+      </div>
+
+      <!-- Floating inline editor for labels -->
+      <input id="inlineEditor" type="text" autocomplete="off" />
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+  </html>
+
+
